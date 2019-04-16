@@ -1,7 +1,7 @@
 FROM ubuntu:16.04
 
 # Make Kovah and main script available
-COPY lib/* /tmp/Kavosh
+COPY include/* /tmp/Kavosh
 COPY MC_script_gt_v2.py /tmp/MC_script_gt_v2.py
 
 # Install Kavosh
