@@ -305,6 +305,10 @@ if __name__ == '__main__':
     assert os.path.isfile(args.input_file), "Input file {0} not found.".format(args.input_file)
     assert os.path.isfile(args.motif_notation), "Motif file {0} not found.".format(args.motif_notation)
 
-    simul = RandomizedMotifs(args.input_file, args.output_folder, args.SEED, args.repetitions, args.motif_notation)
+    input_file = os.path.abspath(args.input_file)
+    output_folder = os.path.abspath(args.output_folder)
+    motif_notation = os.path.abspat(args.motif_notation)
+
+    simul = RandomizedMotifs(input_file, output_folder, args.SEED, args.repetitions, motif_notation)
 
     simul.randomize_and_count()
