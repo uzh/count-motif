@@ -296,7 +296,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-i','--input_file', help='Path to the .graphml file containing the network to be randomized')
     parser.add_argument('-o', '--output_folder', default='/home/ubuntu/Output', help='Path to the folder where the file with motif counts will be stored')
-    parser.add_argument('-s', '--seed', default=None, help='Random seed (needed for network randomization)')
+    parser.add_argument('-s', '--SEED', default=None, help='Random seed (needed for network randomization)')
     parser.add_argument('-n', '--repetitions', default=1, help='Number of randomizations to perform')
     parser.add_argument('-m', '--motif_notation', default="3Motif_notation.tsv", help='Motif Notation .tsv file')
 
