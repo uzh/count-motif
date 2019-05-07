@@ -27,7 +27,7 @@ log.propagate = True
 
 class RandomizedMotifs():
 
-    def __init__(self, inp_path, out_dir, seed, reps, motif_notation):
+    def __init__(self, in_path, out_dir, seed, reps, motif_notation):
 
         #load motif number to adj matrix dict
         self.d_motif_adj = {}
@@ -54,7 +54,7 @@ class RandomizedMotifs():
             raise ValueError('Unknown input file format: {0}'.format(self.ftype))
 
         self.N = self.G.number_of_nodes()
-        log("Input file {0} contains {1} nodes".format(in_path, self.N))
+        log.info("Input file {0} contains {1} nodes".format(in_path, self.N))
 
         if 0 != self.N:
 
@@ -257,14 +257,34 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-i','--input_file', help='Path to the .graphml file containing the network to be randomized')
-    parser.add_argument('-o', '--output_folder', default='/home/ubuntu/Output', help='Path to the folder where the file with motif counts will be stored')
-    parser.add_argument('-s', '--SEED', default=None, help='Random seed (needed for network randomization)')
-    parser.add_argument('-n', '--repetitions', type=int, default=1, help='Number of randomizations to perform')
-    parser.add_argument('-m', '--motif_notation', default="3Motif_notation.tsv", help='Motif Notation .tsv file')
+    parser.add_argument('-i','--input_file',
+                        help='Path to the .graphml file containing the '
+                        'network to be randomized')
+    parser.add_argument('-o', '--output_folder',
+                        default='/home/ubuntu/Output',
+                        help='Path to the folder where the file with motif '
+                        'counts will be stored')
+    parser.add_argument('-s', '--SEED',
+                        default=None,
+                        help='Random seed (needed for network randomization)')
+    parser.add_argument('-n', '--repetitions',
+                        type=int,
+                        default=1,
+                        help='Number of randomizations to perform')
+    parser.add_argument('-m', '--motif_notation',
+                        default="3Motif_notation.tsv", help='Motif Notation '
+                        '.tsv file')
+    parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                        action="store_true")
 
     args = parser.parse_args()
 
+    if args.verbose:
+        log.setLevel(logging.DEBUG)
+    else:
+        log.setLevel(logging.INFO)
+
+    
     assert os.path.isfile(args.input_file), "Input file {0} not found.".format(args.input_file)
     assert os.path.isfile(args.motif_notation), "Motif file {0} not found.".format(args.motif_notation)
     assert args.repetitions > 0, "'Number of repetitions must be an integer >= 1"
