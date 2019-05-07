@@ -72,8 +72,7 @@ class RandomizedMotifs():
             gc.collect()
 
             #create dir for tmp files
-            tmpdirname = tempfile.TemporaryDirectory()
-            self.tmp_dir = tmpdirname.name
+            self.tmp_dir = tempfile.mkdtemp()            
 
     def __parse_adj(self):
         
@@ -206,6 +205,15 @@ class RandomizedMotifs():
             }
         return d
 
+
+    def clean(self, dir=False):
+
+        ### DELETE TMP FILES
+        if dir:
+            shutil.rmtree(self.tmp_dir)
+        else:
+            for f in ['tmp_kavosh.tsv', 'Motif_count.txt', 'adjMatrix.txt']:
+                os.remove(os.path.join(self.tmp_dir,f))
 
     def parse_and_save(self, it=''):
 
