@@ -36,6 +36,11 @@ class RandomizedMotifs():
                 adj, motif = line.split('\t')
                 self.d_motif_adj[int(motif)] = adj
 
+        self.in_path = in_path
+        self.out_dir = out_dir
+        self.SEED = seed
+        self.repetitions = reps
+
         #load input graph (infer type of input)
         self.fname, self.ftype = self.in_path.rsplit('/',1)[-1].split('.')
 
