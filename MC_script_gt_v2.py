@@ -5,44 +5,29 @@ the script takes in input a file path and the number of randomization to run:
 - input_file: str, the path to a .graphml file
 - n: int, number of randomized graphs to run
 """
-import os, shutil
-import argparse
 import gc
+import os
+import sys
+import shutil
+import logging
+import tempfile
 import datetime
-import numpy.random
-
-import networkx as nx
+import argparse
 import numpy as np
+import numpy.random
+import networkx as nx
 import subprocess as sp
 import graph_tool as gt
-
 from graph_tool.generation import random_rewire
+
+logging.basicConfig()
+log = logging.getLogger()
+log.propagate = True
 
 
 class RandomizedMotifs():
 
     def __init__(self, inp_path, out_dir, seed, reps, motif_notation):
-
-        if os.path.isfile(inp_path):
-            self.in_path = inp_path
-        else:
-            raise ValueError('Input file does not exist.')
-
-        if os.path.isdir(out_dir):
-            self.out_dir = out_dir
-        else:
-            raise ValueError('Output folder does not exist.')
-
-        if None == seed:
-            self.SEED = seed
-        else:
-            self.SEED = (int(seed))
-
-        if int(reps)>0:
-            self.repetitions = int(reps)
-        else:
-            raise ValueError('Number of repetitions must be an integer >= 1.')
-
 
         #load motif number to adj matrix dict
         self.d_motif_adj = {}
@@ -51,21 +36,20 @@ class RandomizedMotifs():
                 adj, motif = line.split('\t')
                 self.d_motif_adj[int(motif)] = adj
 
-
         #load input graph (infer type of input)
-        fmt = self.in_path.split('.')[-1]
+        self.fname, self.ftype = self.in_path.rsplit('/',1)[-1].split('.')
 
-        if 'graphml' == fmt:
+        if 'graphml' == self.ftype:
             with open(self.in_path, 'r') as fh:
                 self.G = nx.read_graphml(fh, node_type=int)
-        elif 'csv' == fmt:
+        elif 'csv' == self.ftype:
             with open(self.in_path, 'rb') as fh:
                 self.G = nx.read_edgelist(fh, delimiter=',', create_using=nx.DiGraph())
         else:
-            raise ValueError('Unknown input file format.')
-
+            raise ValueError('Unknown input file format: {0}'.format(self.ftype))
 
         self.N = self.G.number_of_nodes()
+        log("Input file {0} contains {1} nodes".format(in_path, self.N))
 
         if 0 != self.N:
 
@@ -83,9 +67,8 @@ class RandomizedMotifs():
             gc.collect()
 
             #create dir for tmp files
-            self.tmp_dir = self.out_dir+'/tmp_'+str(self.SEED)
-            os.mkdir(self.tmp_dir)
-
+            tmpdirname = tempfile.TemporaryDirectory()
+            self.tmp_dir = tmpdirname.name
 
     def __parse_adj(self):
         
@@ -93,7 +76,7 @@ class RandomizedMotifs():
         adj = ''
         d = {}
 
-        with open(self.tmp_dir+'/adjMatrix.txt', 'r') as fh:
+        with open(os.path.join(self.tmp_dir,'adjMatrix.txt'), 'r') as fh:
 
             for i, line in enumerate(fh):
 
@@ -112,7 +95,7 @@ class RandomizedMotifs():
         d_motif_read = {}
         d_motif_count = {}
 
-        with open(self.tmp_dir+'/Motif_count.txt', 'r') as fh:
+        with open(os.path.join(self.tmp_dir,'Motif_count.txt'), 'r') as fh:
             fh.readline()
             for line in fh:
                 ID, count = line.strip().split('\t')
@@ -138,9 +121,8 @@ class RandomizedMotifs():
 
         lines = [str(i)+'\t'+'0\n' for i in range(1,14)]
 
-        with open(self.out_dir+'/'+self.in_path.rsplit('/',1)[-1].split('.')[0]+'_MC_'+str(self.SEED)+'_'+str(it)+'.tsv', 'w') as fh:                
+        with open(os.path.join(self.out_dir,"{0}_MC_{1}_{2}.tsv".format(self.fname,self.SEED,it)), 'w') as fh:
             fh.writelines(lines)
-
 
     def randomize_and_dump(self):
         
@@ -149,7 +131,7 @@ class RandomizedMotifs():
 
         # DUMPING
         edges = self.G.get_edges()[:, :2]
-        with open(self.tmp_dir+'/tmp_kavosh.tsv', 'w+') as fh:
+        with open(os.path.join(self.tmp_dir,'tmp_kavosh.tsv'), 'w+') as fh:
             np.savetxt(fh, edges, fmt='%s', delimiter='\t', header=str(self.N), comments='')
 
         #free some memory
@@ -161,13 +143,8 @@ class RandomizedMotifs():
     
     def run_kavosh(self):
 
-        os.chdir('Kavosh_src')
-
         Kavosh_args = ['-i', self.tmp_dir+'/tmp_kavosh.tsv', '-o', self.tmp_dir, '-s', '3']
-        sp.check_call(['./Kavosh']+Kavosh_args, stdout=sp.DEVNULL)
-
-        os.chdir('..')
-
+        sp.check_call(['Kavosh']+Kavosh_args, stdout=sp.DEVNULL)
         return
 
 
@@ -240,25 +217,10 @@ class RandomizedMotifs():
         for m in sorted(d_bowtie.keys()):
             lines.append(str(m) + '\t' + str(d_bowtie[m]) + '\n')
 
-        with open(self.out_dir+'/'+self.in_path.rsplit('/',1)[-1].split('.')[0]+'_MC_'+str(self.SEED)+'_'+str(it)+'.tsv', 'w') as fh:                
+        with open(os.path.join(self.out_dir,"{0}_MC_{1}_{2}.tsv".format(self.fname,self.SEED,it)), 'w') as fh:                
             fh.writelines(lines)
 
         return
-
-
-    def clean(self, dir=False):
-
-        ### DELETE TMP FILES
-        if dir:
-            shutil.rmtree(self.tmp_dir)
-        else:
-            rm = ['/tmp_kavosh.tsv', '/Motif_count.txt', '/adjMatrix.txt']
-
-            for f in rm:
-                os.remove(self.tmp_dir+f)
-
-        return
-
 
     def randomize_and_count(self):
 
@@ -272,7 +234,7 @@ class RandomizedMotifs():
                 start = datetime.datetime.now()
 
                 self.randomize_and_dump()
-                print('Rand time: {}'.format(datetime.datetime.now()-start))
+                log.info('Rand time: {}'.format(datetime.datetime.now()-start))
 
                 self.run_kavosh()
                 self.parse_and_save(i+1)
@@ -280,14 +242,10 @@ class RandomizedMotifs():
 
         if 0 != self.N:
             #free some memory and clean all tmp
-            self.clean(dir=True)
-
             del self.G
             gc.collect()
 
         return
-
-
 
 
 if __name__ == '__main__':
@@ -297,18 +255,28 @@ if __name__ == '__main__':
     parser.add_argument('-i','--input_file', help='Path to the .graphml file containing the network to be randomized')
     parser.add_argument('-o', '--output_folder', default='/home/ubuntu/Output', help='Path to the folder where the file with motif counts will be stored')
     parser.add_argument('-s', '--SEED', default=None, help='Random seed (needed for network randomization)')
-    parser.add_argument('-n', '--repetitions', default=1, help='Number of randomizations to perform')
+    parser.add_argument('-n', '--repetitions', type=int, default=1, help='Number of randomizations to perform')
     parser.add_argument('-m', '--motif_notation', default="3Motif_notation.tsv", help='Motif Notation .tsv file')
 
     args = parser.parse_args()
 
     assert os.path.isfile(args.input_file), "Input file {0} not found.".format(args.input_file)
     assert os.path.isfile(args.motif_notation), "Motif file {0} not found.".format(args.motif_notation)
+    assert args.repetitions > 0, "'Number of repetitions must be an integer >= 1"
+
+    try:
+        seed = int(seed)
+    except (TypeError, ValueError):
+        seed = None
 
     input_file = os.path.abspath(args.input_file)
     output_folder = os.path.abspath(args.output_folder)
     motif_notation = os.path.abspath(args.motif_notation)
 
-    simul = RandomizedMotifs(input_file, output_folder, args.SEED, args.repetitions, motif_notation)
+    # Create output folder if does not exists
+    if not os.path.isdir(output_folder):
+        log.info("Creating output folder {0}".format(output_folder))
+        os.makedirs(output_folder)
 
+    simul = RandomizedMotifs(input_file, output_folder, seed, args.repetitions, motif_notation)
     simul.randomize_and_count()
