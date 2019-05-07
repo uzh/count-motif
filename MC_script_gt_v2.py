@@ -265,7 +265,7 @@ if __name__ == '__main__':
     assert args.repetitions > 0, "'Number of repetitions must be an integer >= 1"
 
     try:
-        seed = int(seed)
+        seed = int(args.seed)
     except (TypeError, ValueError):
         seed = None
 
