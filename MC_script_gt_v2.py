@@ -307,7 +307,7 @@ if __name__ == '__main__':
 
     input_file = os.path.abspath(args.input_file)
     output_folder = os.path.abspath(args.output_folder)
-    motif_notation = os.path.abspat(args.motif_notation)
+    motif_notation = os.path.abspath(args.motif_notation)
 
     simul = RandomizedMotifs(input_file, output_folder, args.SEED, args.repetitions, motif_notation)
 
