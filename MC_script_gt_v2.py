@@ -24,6 +24,8 @@ logging.basicConfig()
 log = logging.getLogger()
 log.propagate = True
 
+# Defaults
+FILE_FORMATS = ['graphml','csv']
 
 class RandomizedMotifs():
 
@@ -51,7 +53,7 @@ class RandomizedMotifs():
             with open(self.in_path, 'rb') as fh:
                 self.G = nx.read_edgelist(fh, delimiter=',', create_using=nx.DiGraph())
         else:
-            raise ValueError('Unknown input file format: {0}'.format(self.ftype))
+            log.warning('Unknown input file format: {0}'.format(self.ftype))
 
         self.N = self.G.number_of_nodes()
         log.info("Input file {0} contains {1} nodes".format(in_path, self.N))
@@ -149,7 +151,7 @@ class RandomizedMotifs():
     def run_kavosh(self):
 
         Kavosh_args = ['-i', self.tmp_dir+'/tmp_kavosh.tsv', '-o', self.tmp_dir, '-s', '3']
-        log.info("Running Kavosh with args: {0}".format(Kavosh_args))
+        log.debug("Running Kavosh with args: {0}".format(Kavosh_args))
         sp.check_call(['Kavosh']+Kavosh_args, stdout=sp.DEVNULL)
         return
 
@@ -308,10 +310,15 @@ if __name__ == '__main__':
     output_folder = os.path.abspath(args.output_folder)
     motif_notation = os.path.abspath(args.motif_notation)
 
+    fname, ftype = args.input_file.rsplit('/',1)[-1].split('.')
+    if not ftype in FILE_FORMATS:
+        log.error("file format {0} not supported".format(ftype))
+        sys.exit(1)
+
     # Create output folder if does not exists
     if not os.path.isdir(output_folder):
         log.info("Creating output folder {0}".format(output_folder))
         os.makedirs(output_folder)
 
     simul = RandomizedMotifs(input_file, output_folder, seed, args.repetitions, motif_notation)
-    simul.randomize_and_count()
+    sys.exit(simul.randomize_and_count())
