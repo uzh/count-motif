@@ -1,7 +1,7 @@
 FROM ubuntu:16.04
 
 # Make Kovah and main script available
-COPY data/* /tmp/Kavosh
+COPY include/* /tmp/Kavosh
 COPY MC_script_gt_v2.py /tmp/MC_script_gt_v2.py
 
 # Install Kavosh
@@ -19,8 +19,9 @@ python3-pip \
 python3-graph-tool \
 && rm -rf /var/lib/apt/lists/* \
 && pip3 install networkx \
+&& cd /tmp/Kavosh \
 && make \
-&& cp /tmp/Kavosh /usr/local/bin/Kavosh \
+&& cp Kavosh /usr/local/bin/Kavosh \
 && cp /tmp/MC_script_gt_v2.py /usr/local/bin/MC_script_gt_v2 \
 && chmod +x /usr/local/bin/MC_script_gt_v2
 ENTRYPOINT ["python3", "/usr/local/bin/MC_script_gt_v2"]
