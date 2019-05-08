@@ -19,9 +19,8 @@ python3-pip \
 python3-graph-tool \
 && rm -rf /var/lib/apt/lists/* \
 && pip3 install networkx \
-&& cd /tmp/Kavosh \
 && make \
-&& cp Kavosh /usr/local/bin/Kavosh \
+&& cp /tmp/Kavosh /usr/local/bin/Kavosh \
 && cp /tmp/MC_script_gt_v2.py /usr/local/bin/MC_script_gt_v2 \
 && chmod +x /usr/local/bin/MC_script_gt_v2
 ENTRYPOINT ["python3", "/usr/local/bin/MC_script_gt_v2"]
