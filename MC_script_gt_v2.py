@@ -135,8 +135,9 @@ class RandomizedMotifs():
 
         # DUMPING
         edges = self.G.get_edges()[:, :2]
-        with open(os.path.join(self.tmp_dir,'tmp_kavosh.tsv'), 'w+') as fh:
+        with open(os.path.join(self.tmp_dir,'tmp_kavosh.tsv'), 'wb') as fh:
             np.savetxt(fh, edges, fmt='%s', delimiter='\t', header=str(self.N), comments='')
+            fh.flush()
 
         #free some memory
         del edges
@@ -148,6 +149,7 @@ class RandomizedMotifs():
     def run_kavosh(self):
 
         Kavosh_args = ['-i', self.tmp_dir+'/tmp_kavosh.tsv', '-o', self.tmp_dir, '-s', '3']
+        log.info("Running Kavosh with args: {0}".format(Kavosh_args))
         sp.check_call(['Kavosh']+Kavosh_args, stdout=sp.DEVNULL)
         return
 
